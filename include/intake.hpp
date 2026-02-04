@@ -17,7 +17,8 @@ class Intake {
             OUTTAKING,
             MIDDLE,
             MIDDLE_SLOW,
-            OUTTAKING_SLOW
+            OUTTAKING_SLOW,
+            MIDDLE_AUTO,
         };
         pros::MotorGroup scoring_motors;
         pros::MotorGroup intake_motors;
