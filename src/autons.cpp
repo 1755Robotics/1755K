@@ -55,15 +55,14 @@ void rightQual()  {
     pros::delay(200);
     wing.set_value(true);
     intake.set_state_and_move(Intake::State::INTAKING);
-    pros::Task([] {
-        pros::delay(1300);
-        lil_krith.set_value(true);
-    });
     chassis.moveToPoint(-44, -14.2, 1000, {.minSpeed = 35, .earlyExitRange = 2});
     chassis.moveToPose(-19, -27, 125, 2000, {.forwards = true}, false);
-    lil_krith.set_value(false);
-    chassis.moveToPoint(-12, -40, 2000);
-    lil_krith.set_value(true);
+    pros::Task([] {
+        pros::delay(300);
+        lil_krith.set_value(true);
+    });
+    chassis.moveToPoint(-9, -40, 2000, {}, false);
+    chassis.turnToHeading(180, 300);
     /*
     //Move to left feeder
     intake.set_state_and_move(Intake::State::INTAKING);
