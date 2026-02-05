@@ -55,14 +55,38 @@ void rightQual()  {
     pros::delay(200);
     wing.set_value(true);
     intake.set_state_and_move(Intake::State::INTAKING);
+    pros::Task([] {
+        pros::delay(1300);
+        lil_krith.set_value(true);
+        pros::delay(300);
+        lil_krith.set_value(false);
+    });
     chassis.moveToPoint(-44, -14.2, 1000, {.minSpeed = 35, .earlyExitRange = 2});
     chassis.moveToPose(-19, -27, 125, 2000, {.forwards = true}, false);
     pros::Task([] {
-        pros::delay(300);
+        pros::delay(400);
         lil_krith.set_value(true);
     });
-    chassis.moveToPoint(-9, -40, 2000, {}, false);
+    chassis.moveToPoint(-8.5, -40, 2000, {}, false);
     chassis.turnToHeading(180, 300);
+    chassis.moveToPoint(-8.5, -42, 500);
+
+    chassis.moveToPoint(-10.5, -24, 2000, {.forwards= false});
+    chassis.turnToHeading(270, 700);
+    chassis.moveToPose(-45, -45, 225, 2000, {.forwards = true, .minSpeed = 50}, false);
+    chassis.turnToHeading(270, 700);
+    chassis.moveToPoint(-67, -45, 1000, {.forwards = true, .maxSpeed = 80}, false);
+    pros::delay(250);
+    chassis.moveToPoint(-20, -45, 1000, {.forwards = false}, false);
+    wing.set_value(false);
+    pros::delay(1800);
+    intake.set_state_and_move(Intake::State::OUTTAKING_SLOW);
+    pros::delay(200);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    pros::delay(2000);
+    wing.set_value(true);
+    chassis.moveToPoint(-32, -45, 2000, {.forwards = true, .minSpeed = 50}, false);
+    chassis.moveToPoint(-26, -45, 2000, {.forwards = true, .minSpeed = 50}, false);
     /*
     //Move to left feeder
     intake.set_state_and_move(Intake::State::INTAKING);
