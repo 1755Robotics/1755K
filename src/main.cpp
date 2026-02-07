@@ -6,7 +6,7 @@ pros::adi::DigitalOut lil_krith('G', false);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 // motor groups
-pros::MotorGroup leftMotors({-10, -14, -15}, pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
+pros::MotorGroup leftMotors({-10, -14, -16}, pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
 pros::MotorGroup rightMotors({9, 11, 12}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
 
 // Inertial Sensor on port 13
