@@ -11,8 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 enum class AutonRoutine {
     LeftQual,
     RightQual,
-    LeftElim,
-    RightElim,
     Skills,
     LinPID,
     AngPID,

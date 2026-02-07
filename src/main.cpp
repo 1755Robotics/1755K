@@ -29,7 +29,7 @@ lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
                               450, // drivetrain rpm is 450
                               2 // horizontal drift is 2. If we had traction wheels, it would have been 8
 );
-Intake intake({7, -8, -20}, {20});
+Intake intake({5, -8, -20}, {20});
 
 // lateral motion controller
 lemlib::ControllerSettings linearController(  11.2, // proportional gain (kP)
