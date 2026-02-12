@@ -3,10 +3,11 @@
 
 pros::adi::DigitalOut wing('H', false);        
 pros::adi::DigitalOut lil_krith('G', false);
+pros::adi::DigitalOut hood('F', false);   
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 // motor groups
-pros::MotorGroup leftMotors({-10, -14, -15}, pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
+pros::MotorGroup leftMotors({-7, -14, -16}, pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
 pros::MotorGroup rightMotors({9, 11, 12}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
 
 // Inertial Sensor on port 13
@@ -29,7 +30,7 @@ lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
                               450, // drivetrain rpm is 450
                               2 // horizontal drift is 2. If we had traction wheels, it would have been 8
 );
-Intake intake({7, -8, -20}, {20});
+Intake intake({4, -8, -20}, {20});
 
 // lateral motion controller
 lemlib::ControllerSettings linearController(  11.2, // proportional gain (kP)
@@ -167,8 +168,10 @@ void opcontrol() {
     	// Wing: L1 extends, L2 retracts
     	if (master.get_digital(DIGITAL_L1)) {
       	wing.set_value(true);   // Extend
+        hood.set_value(false);
     	} else if (master.get_digital(DIGITAL_L2)) {
       	wing.set_value(false);  // Retract
+        hood.set_value(true);
     	}
 
     	static bool lil_krith_state = false;

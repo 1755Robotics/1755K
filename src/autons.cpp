@@ -9,9 +9,7 @@ AutonRoutine selectedAuton = AutonRoutine::None;
 // Autonomous routines
 // ------------------------
 void leftQual()   { 
-
     chassis.setPose(60, -14.2, -90, false);
-    lemlib::Pose tmpPose = chassis.getPose();
     pros::lcd::print(1, "Running Left Qual"); 
     pros::delay(200);
     wing.set_value(true);
@@ -21,135 +19,252 @@ void leftQual()   {
         lil_krith.set_value(true);
     });
     chassis.moveToPoint(44, -14.2, 1000, {.minSpeed = 35, .earlyExitRange = 2});
-    chassis.moveToPose(21, -27, -135, 2000, {.forwards = true}, false);
+    chassis.moveToPose(19, -27, -125, 2000, {.forwards = true}, false);
 
     //Move to high middle goal
     chassis.turnToHeading(-225, 700);
-
-    chassis.moveToPose(3, -4, -225, 2000, {.forwards = false,.minSpeed = 30}, false);
-    intake.set_state_and_move(Intake::State::MIDDLE);
-    pros::delay(600);
-
+    pros::Task([] {
+        pros::delay(300);
+        intake.set_state_and_move(Intake::State::NONE);
+    });
+    chassis.moveToPose(2, -5, -225, 2000, {.forwards = false,.minSpeed = 30}, false);
+    intake.set_state_and_move(Intake::State::MIDDLE_AUTO);
+    pros::delay(500);
     //Move to left feeder
     intake.set_state_and_move(Intake::State::INTAKING);
     chassis.moveToPose(40.5, -48, -225, 2000, {.forwards = true}, false);
     chassis.turnToHeading(-270, 700);
-    chassis.moveToPoint(62, -50, 1000, {.forwards = true, .maxSpeed = 70}, false);
+    chassis.moveToPoint(67, -48, 1000, {.forwards = true, .maxSpeed = 60}, false);
     pros::delay(225);
-    chassis.moveToPoint(20, -50, 1000, {.forwards = false}, false);
+    chassis.moveToPoint(20, -48, 1000, {.forwards = false}, false);
     wing.set_value(false);
+    pros::delay(1500);
+    chassis.moveToPoint(33, -50, 1000, {.forwards = true}, false);
+    intake.set_state_and_move(Intake::State::NONE);
+    pros::delay(200);
+    chassis.turnToHeading(0, 700, {}, false);
+    lil_krith.set_value(false);
+    chassis.moveToPoint(35,-38, 700);
+    chassis.turnToHeading(90 ,700);
+    chassis.moveToPoint(18,-40,700, {.forwards = false});
 }
 
 
 void rightQual()  { 
-
-    chassis.setPose(-60, -14.2, -90, false);
-    pros::lcd::print(1, "Running Right Qual");  
-    pros::delay(20);
-    wing.set_value(true);
-    intake.set_state_and_move(Intake::State::INTAKING);
-    chassis.moveToPose(-110, -15, -105, 2000);
-    chassis.turnToHeading(225, 700);
-    pros::delay(300);
-    
-    lemlib::Pose currPose = chassis.getPose();
-    //move to middle lower goal
-    chassis.moveToPose(-110, -28, currPose.theta, 2000, {.forwards = true},false);
-   
-    //outtake slow to control the push, with full 12v it is pushing the cuboid out of goal
-    intake.set_state_and_move(Intake::State::OUTTAKING_SLOW);
-    //longer run to give time for outtake slow complely push all the balls. this can be tweaked
-    pros::delay(2500);
-    intake.set_state_and_move(Intake::State::NONE);
-    lemlib::Pose tmpPose = chassis.getPose();
-    std::string tmp = " pos theta:" + std::to_string(tmpPose.theta) ;
-    pros::lcd::print(2, tmp.c_str());
-    //Reverse and turn
-    chassis.moveToPose(-95, -20, 35, 2000, {.forwards = false},false);
-    intake.set_state_and_move(Intake::State::INTAKING);
-    lil_krith.set_value(true);
-    
-    //Move to right feeder and get the cuboids
-    chassis.moveToPose(-45, 0, 115, 2000);
-    pros::delay(1000);
-
-    //move to score in right goal
-    currPose = chassis.getPose();
-    chassis.moveToPoint(currPose.x-15, currPose.y+5, 1200, {.forwards = false}, false);
-    wing.set_value(false);
-    lil_krith.set_value(false);
-    //delay to give time to push all the cuboids out, this can be tweaked
-    pros::delay(1500);
-
-    
-    // tmpPose = chassis.getPose();
-    // tmp = "feeder pos x:" + std::to_string(tmpPose.x) + ", Y:"+ std::to_string(tmpPose.y);
-    // pros::lcd::print(2, tmp.c_str());
-
-
-    currPose = chassis.getPose();
-    intake.set_state_and_move(Intake::State::NONE);
-
-    //Reverse
-    chassis.moveToPoint(-55, 15, 1200, {.forwards = true}, false);
-    //Use de-score to push it inside control zone.
-    chassis.moveToPoint(-105, 17, 1200, {.forwards = false}, false);
-
-    
-    /* old original code
-    chassis.setPose(-60, -14.2, -90, false);
-    pros::lcd::print(1, "Running Right Qual");  
-    pros::delay(20);
-    wing.set_value(true);
-    intake.set_state_and_move(Intake::State::INTAKING);
-    chassis.moveToPose(-105, -28, -60, 2000);
-    
-    chassis.turnToHeading(225, 700);
-    intake.set_state_and_move(Intake::State::NONE);
-    chassis.moveToPose(-15, -15, 225, 2000, {.forwards = false});
-    intake.set_state_and_move(Intake::State::OUTTAKING);
-    pros::delay(150);
-    intake.set_state_and_move(Intake::State::MIDDLE);
-    pros::delay(500);
-    intake.set_state_and_move(Intake::State::NONE);
-    chassis.moveToPose(-48,-48, 270, 2000, {.minSpeed=72, .earlyExitRange=8});
-    intake.set_state_and_move(Intake::State::INTAKING);
-    lil_krith.set_value(true);
-    chassis.moveToPose(-62, -48, 270, 700);
-    pros::delay(200);
-    chassis.moveToPose(-28, -48, 270, 600, {.forwards = false});
-    wing.set_value(true);
-    intake.set_state_and_move(Intake::State::INTAKING);
-    pros::delay(1000);
-
-    chassis.moveToPose(-36,-44, 230, 800, {.minSpeed=72, .earlyExitRange=2});
-    wing.set_value(false);
-    chassis.turnToHeading(90, 800, {.minSpeed=72, .earlyExitRange=30});
-    chassis.moveToPose(8, -40, 90, 800);
-    */
-}
-void leftElim()   { 
-    chassis.setPose(60, -14.2, -90, false);
-    pros::lcd::print(0, "Running Left Elim"); 
-    wing.set_value(true);
-    intake.set_state_and_move(Intake::State::INTAKING);
-    chassis.moveToPose(20, -28, -120, 2000, {.minSpeed=72, .earlyExitRange=8});
-    chassis.moveToPose(8, -42, -140, 2000);
-    lil_krith.set_value(true);
-}
-void rightElim()  { 
     chassis.setPose(-60, -14.2, 90, false);
-    pros::lcd::print(0, "Running Right Elim"); 
+    pros::lcd::print(1, "Running Right Qual");  
+    pros::delay(200);
     wing.set_value(true);
     intake.set_state_and_move(Intake::State::INTAKING);
-    chassis.moveToPose(-20, -28, 120, 2000,{.minSpeed=72, .earlyExitRange=8});
-    chassis.moveToPose(-8, -42, 140, 2000);
-    lil_krith.set_value(true);
+    pros::Task([] {
+        pros::delay(1300);
+        lil_krith.set_value(true);
+        pros::delay(400);
+        lil_krith.set_value(false);
+    });
+    chassis.moveToPoint(-44, -14.2, 1000, {.minSpeed = 35, .earlyExitRange = 2});
+    chassis.moveToPose(-19, -27, 125, 2000, {.forwards = true}, false);
+    pros::Task([] {
+        pros::delay(1000);
+        lil_krith.set_value(true);
+    });
+    chassis.moveToPoint(-8.5, -40, 2000, {}, false);
+    chassis.turnToHeading(180, 300);
+    chassis.moveToPoint(-8.5, -42, 500);
+    pros::delay(200);
+
+    chassis.moveToPoint(-10.5, -24, 2000, {.forwards= false});
+    chassis.turnToHeading(270, 700);
+    chassis.moveToPose(-45, -45, 225, 2000, {.forwards = true, .minSpeed = 50}, false);
+    chassis.turnToHeading(270, 700);
+    chassis.moveToPoint(-69, -45, 1000, {.forwards = true, .maxSpeed = 60}, false);
+    pros::delay(340);
+    chassis.moveToPoint(-69, -45, 1000, {.forwards = true, .maxSpeed = 60}, false);
+    chassis.moveToPoint(-20, -44, 1000, {.forwards = false}, false);
+    wing.set_value(false);
+    pros::delay(1800);
+    intake.set_state_and_move(Intake::State::OUTTAKING_SLOW);
+    pros::delay(200);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    pros::delay(2000);
+    wing.set_value(true);
+    chassis.moveToPoint(-32, -45, 1000, {.forwards = true, .minSpeed = 70}, false);
+    pros::delay(200);
+    chassis.moveToPoint(-26, -45, 2000, {.forwards = true, .minSpeed = 80}, false);
+    /*
+    //Move to left feeder
+    intake.set_state_and_move(Intake::State::INTAKING);
+    chassis.moveToPose(40.5, -48, -225, 2000, {.forwards = true}, false);
+    chassis.turnToHeading(-270, 700);
+    chassis.moveToPoint(67, -48, 1000, {.forwards = true, .maxSpeed = 80}, false);
+    pros::delay(225);
+    chassis.moveToPoint(20, -48, 1000, {.forwards = false}, false);
+    wing.set_value(false);
+    pros::delay(1500);
+    chassis.moveToPoint(33, -50, 1000, {.forwards = true}, false);
+    intake.set_state_and_move(Intake::State::NONE);
+    chassis.turnToHeading(0, 700, {}, false);
+    lil_krith.set_value(false);
+    chassis.moveToPoint(31,-40, 700);
+    chassis.turnToHeading(-275,700);
+    chassis.moveToPoint(14,-40,700, {.forwards = false});
+    */
+};
 
 
-}
 void autonSkills() { 
-    pros::lcd::print(0, "Running Skills"); 
+    chassis.setPose(48, 15.5, 0, false);
+    pros::lcd::print(0, "Running Skills");
+    pros::delay(300);
+    wing.set_value(true);
+    lil_krith.set_value(true);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    chassis.moveToPoint(48, 48, 2000);
+    chassis.turnToHeading(90, 700);
+    chassis.moveToPoint(72, 48, 1000, {.maxSpeed = 70});
+    pros::delay(2000);
+    chassis.moveToPoint(73, 49, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(73, 49, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(73, 49, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(72, 49, 200, {.maxSpeed = 70});
+    chassis.moveToPose(45, 63, 90, 2000, {.forwards = false});
+    chassis.moveToPose(-30, 63, 90,2000, {.forwards = false});
+    lil_krith.set_value(false);
+    pros::delay(500);
+    chassis.moveToPose(-44, 50, 90, 2000, {.forwards = false});
+    pros::delay(500);
+    chassis.turnToHeading(-90, 700);
+    pros::delay(500);
+    chassis.moveToPose(-5, 50, -90, 2500, {.forwards = false});
+    pros::delay(900);
+    intake.set_state_and_move(Intake::State::OUTTAKING);
+    wing.set_value(false);
+    pros::delay(300);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    lil_krith.set_value(true);
+    pros::delay(1800);
+    chassis.turnToHeading(-90, 700);
+    pros::delay(500);
+// match loader far right side
+    chassis.moveToPose(-81, 48,-90, 1400, {.maxSpeed = 60});
+    wing.set_value(true);
+    pros::delay(2000);
+    chassis.moveToPoint(-81, 48, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-81, 48, 200, {.maxSpeed = 70});
+    pros::delay(500);
+    chassis.moveToPoint(-81, 48, 200, {.maxSpeed = 70});
+    pros::delay(500);
+    chassis.moveToPoint(-81, 48, 200, {.maxSpeed = 70});
+    pros::delay(500);
+    chassis.moveToPoint(-81, 48, 200, {.maxSpeed = 70});
+    pros::delay(500);
+    chassis.moveToPoint(-81, 48, 200, {.maxSpeed = 70});
+    pros::delay(500);
+    chassis.moveToPose(0, 50, -90, 3000, {.forwards = false, .maxSpeed = 90});
+    pros::delay(1000);
+    wing.set_value(false);
+    pros::delay(1800);
+    intake.set_state_and_move(Intake::State::OUTTAKING);
+    pros::delay(300);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    pros::delay(3000);
+ 
+
+    //work on whole route after, just park for now
+    chassis.turnToHeading(-180,900);
+    chassis.turnToHeading(-270,700);
+    chassis.moveToPose(53.5, 33, -270, 2000);
+    lil_krith.set_value(false);
+    chassis.moveToPoint(70, 20, 2000, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.turnToHeading(-180, 700);
+    pros::delay(300);
+    lil_krith.set_value(true);
+    pros::delay(300);
+    chassis.moveToPoint(70, -40, 1000, {.minSpeed = 120});
+    pros::delay(300);
+    lil_krith.set_value(false);
+
+
+   //aligning to far left side 
+    /*wing.set_value(true);
+    chassis.turnToHeading(-180, 700);
+    pros::delay(300);
+    chassis.moveToPose(-34,-54, -180, 2000, {.maxSpeed =100});
+    chassis.turnToHeading(-90,700);
+    chassis.moveToPoint(0, -54, 1200, {.forwards = false});
+// match loader far left side
+    chassis.moveToPose(-50, -54,-90, 1000, {.maxSpeed = 70});
+    pros::delay(1300);
+    chassis.moveToPoint(-50, -54, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-50, -54, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-50, -54, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-50, -54, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-50, -54, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-50, -54, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-50, -54, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(-40, -54, 700, {.forwards = false, .maxSpeed = 70});
+    chassis.turnToHeading(-90,600);
+// getting to close left side
+    lil_krith.set_value(false);
+    chassis.moveToPose(-24, -67, -90, 2000, {.forwards = false});
+    chassis.moveToPose(48, -64 , -90, 2000, {.forwards = false});
+    /*chassis.moveToPose(57, -51.5, -90, 2000, {.forwards = false});
+    chassis.turnToHeading(92, 700);
+    pros::delay(1000);
+    chassis.moveToPoint(10, -51.5, 3500, {.forwards = false, .maxSpeed = 60});
+    pros::delay(1000);
+    wing.set_value(false);
+    lil_krith.set_value(true);
+    pros::delay(1800);
+    wing.set_value(true);
+    chassis.turnToHeading(90, 300);
+    pros::delay(300);
+// match loader close left side
+    /*chassis.moveToPose(81, -51, 90, 1000, {.maxSpeed = 70});
+    pros::delay(2000);
+    chassis.moveToPoint(82, -51, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(82, -51, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(82, -51, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(82, -51, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(82, -51, 200, {.maxSpeed = 70});
+    pros::delay(300);
+    chassis.moveToPoint(82, -51, 200, {.maxSpeed = 70});
+    chassis.moveToPose(0, -50, 92, 2000, {.forwards = false});
+    pros::delay(1000);
+    wing.set_value(false);
+    pros::delay(1800);
+    intake.set_state_and_move(Intake::State::OUTTAKING);
+    pros::delay(300);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    pros::delay(1600);
+    wing.set_value(true);
+    //Park
+    lil_krith.set_value(false);
+    chassis.turnToHeading(45, 700);
+    lemlib::Pose tPose = chassis.getPose();
+    chassis.moveToPose(tPose.x+90, tPose.y+20, 90, 2000);
+    chassis.turnToHeading(180, 700, {.maxSpeed = 40});
+    pros::delay(500);
+    tPose = chassis.getPose();
+    chassis.moveToPose(tPose.x+6, 16, 180, 7000, {.forwards = false, .minSpeed = 110});
+    */
+
 }
 void lin_pid_tuning_test() {
     chassis.setPose(0, 0, 0); 
@@ -174,8 +289,6 @@ struct AutonEntry {
 static AutonEntry autons[] = {
     {"Left Qual",  AutonRoutine::LeftQual,  leftQual},
     {"Right Qual", AutonRoutine::RightQual, rightQual},
-    {"Left Elim",  AutonRoutine::LeftElim,  leftElim},
-    {"Right Elim", AutonRoutine::RightElim, rightElim},
     {"Skills",     AutonRoutine::Skills,    autonSkills},
     {"Linear PID", AutonRoutine::LinPID, lin_pid_tuning_test},
     {"Angular PID", AutonRoutine::AngPID, ang_pid_tuning_test},
@@ -188,7 +301,7 @@ static constexpr int AUTON_COUNT =
 // Autonomous selector task
 // ------------------------
 void autonSelectorTask(void*) {
-    int index = -1;  // -1 = None
+    int index = 2;  // -1 = None
     uint8_t lastButtons = pros::lcd::read_buttons();
 
     while (true) {
