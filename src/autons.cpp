@@ -62,17 +62,18 @@ void rightQual()  {
         pros::delay(400);
         lil_krith.set_value(false);
     });
+    //3 blocks
     chassis.moveToPoint(-44, -14.2, 1000, {.minSpeed = 35, .earlyExitRange = 2});
-    chassis.moveToPose(-19, -27, 125, 2000, {.forwards = true}, false);
+    chassis.moveToPose(-4.5, -27, 125, 2200, {.forwards = true}, false);
     pros::Task([] {
-        pros::delay(1000);
+        pros::delay(600);
         lil_krith.set_value(true);
     });
-    chassis.moveToPoint(-8.5, -40, 2000, {}, false);
-    chassis.turnToHeading(180, 300);
-    chassis.moveToPoint(-8.5, -42, 500);
+    // blocks under goal
+    chassis.turnToHeading(180, 500);
+    chassis.moveToPoint(-4, -40, 1000, {.maxSpeed = 70}, false);
     pros::delay(200);
-
+    
     chassis.moveToPoint(-10.5, -24, 2000, {.forwards= false});
     chassis.turnToHeading(270, 700);
     chassis.moveToPose(-45, -45, 225, 2000, {.forwards = true, .minSpeed = 50}, false);

@@ -7,7 +7,7 @@ pros::adi::DigitalOut hood('F', false);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 // motor groups
-pros::MotorGroup leftMotors({-7, -14, -16}, pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
+pros::MotorGroup leftMotors({-5, -14, -16}, pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
 pros::MotorGroup rightMotors({9, 11, 12}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
 
 // Inertial Sensor on port 13
@@ -172,6 +172,9 @@ void opcontrol() {
     	} else if (master.get_digital(DIGITAL_L2)) {
       	wing.set_value(false);  // Retract
         hood.set_value(true);
+        intake.set_state_and_move(Intake::State::OUTTAKING);
+        pros::delay(100);
+        intake.set_state(Intake::State::NONE);
     	}
 
     	static bool lil_krith_state = false;
