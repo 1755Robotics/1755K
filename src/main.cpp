@@ -11,6 +11,7 @@ pros::MotorGroup rightMotors({9, 11, 12}, pros::MotorGearset::blue); // right mo
 
 // Inertial Sensor on port 13
 pros::Imu imu(13);
+pros::Distance distance_sensor(17);
 
 // tracking wheels
 // horizontal tracking wheel encoder. Rotation sensor, port 6, reversed
@@ -18,7 +19,7 @@ pros::Rotation horizontalEnc(6);
 // vertical tracking wheel encoder. Rotation sensor, port 3, not reversed
 pros::Rotation verticalEnc(3);
 // horizontal tracking wheel. 2.75" diameter, 5.75" offset, back of the robot (negative)
-lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_2, -5.75);
+lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_2, 6.5);
 lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_2, 0);
 // vertical tracking wheel. 2.75" diameter, 2.5" offset, left of the robot (negative)
 // drivetrain settings
@@ -33,9 +34,19 @@ lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
 Intake intake({4, -8, 20}, {-20});
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(  11.2, // proportional gain (kP)
+// lemlib::ControllerSettings linearController(  11.2, // proportional gain (kP)
+//                                               0, // integral gain (kI)
+//                                               100, // derivative gain (kD)
+//                                               3, // anti windup
+//                                               1, // small error range, in inches
+//                                               100, // small error range timeout, in milliseconds
+//                                               3, // large error range, in inches
+//                                               500, // large error range timeout, in milliseconds
+//                                               20 // maximum acceleration (slew)
+// );
+lemlib::ControllerSettings linearController(  13, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              100, // derivative gain (kD)
+                                              20, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
@@ -44,26 +55,15 @@ lemlib::ControllerSettings linearController(  11.2, // proportional gain (kP)
                                               20 // maximum acceleration (slew)
 );
 
-// angular motion controller
-// lemlib::ControllerSettings angularController( 3.6, // proportional gain (kP)
-//                                               0, // integral gain (kI)
-//                                               26.593, // derivative gain (kD)
-//                                               3, // anti windup
-//                                               1, // small error range, in inches
-//                                               100, // small error range timeout, in milliseconds
-//                                               3, // large error range, in inches
-//                                               500, // large error range timeout, in milliseconds
-//                                               0 // maximum acceleration (slew)
-// );
-lemlib::ControllerSettings angularController( 2.5, // proportional gain (kP)
+lemlib::ControllerSettings angularController( 3.8, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              14, // derivative gain (kD)
-                                              0, // anti windup
-                                              0, // small error range, in inches
-                                              0, // small error range timeout, in milliseconds
-                                              0, // large error range, in inches
-                                              0, // large error range timeout, in milliseconds
-                                              0 // maximum acceleration (slew)
+                                              31, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              20 // maximum acceleration (slew)
 );
 
 // sensors for odometry
@@ -183,12 +183,12 @@ void opcontrol() {
 
     	// Wing: L1 extends, L2 retracts
     	if (master.get_digital(DIGITAL_L1)) {
-      	wing.set_value(true);   // Extend
+            wing.set_value(true);   // Extend
     	} else if (master.get_digital(DIGITAL_L2)) {
-        intake.set_state_and_move(Intake::State::OUTTAKING);
-      	wing.set_value(false);  // Retract
-        pros::delay(30);
-        intake.set_state_and_move(Intake::State::NONE);
+            intake.set_state_and_move(Intake::State::OUTTAKING);
+            wing.set_value(false);  // Retract
+            pros::delay(50);
+            intake.set_state_and_move(Intake::State::NONE);
     	}
 
     	static bool lil_krith_state = false;
