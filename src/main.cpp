@@ -3,7 +3,6 @@
 
 pros::adi::DigitalOut wing('H', false);        
 pros::adi::DigitalOut lil_krith('G', false);
-pros::adi::DigitalOut hood('F', false);   
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 // motor groups
@@ -14,13 +13,14 @@ pros::MotorGroup rightMotors({9, 11, 12}, pros::MotorGearset::blue); // right mo
 pros::Imu imu(13);
 
 // tracking wheels
-// horizontal tracking wheel encoder. Rotation sensor, port 20, not reversed
-pros::Rotation horizontalEnc(-6);
+// horizontal tracking wheel encoder. Rotation sensor, port 6, reversed
+pros::Rotation horizontalEnc(6);
+// vertical tracking wheel encoder. Rotation sensor, port 3, not reversed
+pros::Rotation verticalEnc(3);
 // horizontal tracking wheel. 2.75" diameter, 5.75" offset, back of the robot (negative)
-lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_2, -1.75);
+lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_2, -5.75);
+lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_2, 0);
 // vertical tracking wheel. 2.75" diameter, 2.5" offset, left of the robot (negative)
-lemlib::TrackingWheel vertical1(&rightMotors, lemlib::Omniwheel::NEW_325, 5.625, 450);
-lemlib::TrackingWheel vertical2(&leftMotors, lemlib::Omniwheel::NEW_325, -5.625, 450);
 // drivetrain settings
 
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
@@ -30,7 +30,7 @@ lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
                               450, // drivetrain rpm is 450
                               2 // horizontal drift is 2. If we had traction wheels, it would have been 8
 );
-Intake intake({4, -8, -20}, {20});
+Intake intake({4, -8, 20}, {-20});
 
 // lateral motion controller
 lemlib::ControllerSettings linearController(  11.2, // proportional gain (kP)
@@ -45,20 +45,30 @@ lemlib::ControllerSettings linearController(  11.2, // proportional gain (kP)
 );
 
 // angular motion controller
-lemlib::ControllerSettings angularController( 3.6, // proportional gain (kP)
+// lemlib::ControllerSettings angularController( 3.6, // proportional gain (kP)
+//                                               0, // integral gain (kI)
+//                                               26.593, // derivative gain (kD)
+//                                               3, // anti windup
+//                                               1, // small error range, in inches
+//                                               100, // small error range timeout, in milliseconds
+//                                               3, // large error range, in inches
+//                                               500, // large error range timeout, in milliseconds
+//                                               0 // maximum acceleration (slew)
+// );
+lemlib::ControllerSettings angularController( 2.5, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              26.593, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
+                                              14, // derivative gain (kD)
+                                              0, // anti windup
+                                              0, // small error range, in inches
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in inches
+                                              0, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
 // sensors for odometry
-lemlib::OdomSensors sensors(&vertical1, // vertical tracking wheel
-                            &vertical2, // vertical tracking wheel 2, set to nullptr as we don't have a second one
+lemlib::OdomSensors sensors(&vertical, // vertical tracking wheel
+                            nullptr, // vertical tracking wheel 2, set to nullptr as we don't have a second one
                             &horizontal, // horizontal tracking wheel
                             nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
                             &imu // inertial sensor
@@ -92,7 +102,13 @@ void initialize() {
     // print position to brain screen
     chassis.setPose(0, 0, 0); 
 	intake.init();
+    // while (true) {
+    //     pros::lcd::print(0, "Horizontal Sensor: %i", horizontalEnc.get_position());
+    //     pros::lcd::print(1, "Vertical Sensor: %i", verticalEnc.get_position());
+    //     pros::delay(10); // delay to save resources. DO NOT REMOVE
+    // }
     startAutonSelector();
+
 }
 
 /**
@@ -168,13 +184,11 @@ void opcontrol() {
     	// Wing: L1 extends, L2 retracts
     	if (master.get_digital(DIGITAL_L1)) {
       	wing.set_value(true);   // Extend
-        hood.set_value(false);
     	} else if (master.get_digital(DIGITAL_L2)) {
-      	wing.set_value(false);  // Retract
-        hood.set_value(true);
         intake.set_state_and_move(Intake::State::OUTTAKING);
-        pros::delay(100);
-        intake.set_state(Intake::State::NONE);
+      	wing.set_value(false);  // Retract
+        pros::delay(30);
+        intake.set_state_and_move(Intake::State::NONE);
     	}
 
     	static bool lil_krith_state = false;
