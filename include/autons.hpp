@@ -9,8 +9,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Enum for autonomous routines
 enum class AutonRoutine {
-    LeftQual,
-    RightQual,
+    LeftFourBall,
+    RightFourBall,
+    LeftSeven,
+    RightSeven,
+    LeftAWP,
+    RightAWP,
     Skills,
     LinPID,
     AngPID,
