@@ -22,7 +22,7 @@ void Intake::move() {
             scoring_motors.move_voltage(2000); // 10 reverse
             break;
         case State::OUTTAKING_SLOW:
-            intake_motors.move_voltage(-6500);  // 7V reverse
+            intake_motors.move_voltage(-9000);  // 7V reverse
             break;
         case State::NONE:
         default:
