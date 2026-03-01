@@ -227,7 +227,54 @@ void rightSeven() {
 }
 
 void rightAWP() {
+    chassis.setPose(-48, -15.5, 0, false);
+    pros::lcd::print(0, "Running 4 Ball Wing");
+    pros::delay(100);
+    wing.set_value(true);
+    lil_krith.set_value(true);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    chassis.moveToPoint(-48, -33.8, 2000, {.forwards = false, .maxSpeed = 120, .minSpeed = 80});
+    chassis.turnToHeading(-90, 700);
+    chassis.moveToPoint(-60, -48.2, 1000, {.maxSpeed = 65});
+    pros::delay(900);
+    distanceReset(15, -57, -48.2, -90);
 
+
+    chassis.moveToPoint(-24, -48.8, 1100, {.forwards = false, .maxSpeed = 60},false);
+    wing.set_value(false);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    lil_krith.set_value(false);
+    pros::delay(1000);
+    distanceReset(40, -26, -48.5, -90);
+
+    chassis.turnToHeading(0, 600);
+    wing.set_value(true);
+    chassis.moveToPoint(-24, 30, 2000, {.maxSpeed = 80});
+    /*pros::Task([] {
+        pros::delay(1200);
+        lil_krith.set_value(true);
+        pros::delay(200);
+        lil_krith.set_value(false);
+    });*/
+    pros::delay(200);
+    chassis.turnToHeading(-45, 1000);
+    intake.set_state_and_move(Intake::State::OUTTAKING);
+    pros::delay(100);
+    intake.set_state_and_move(Intake::State::NONE);
+    chassis.moveToPoint(-9.4, 14, 1000,{.forwards = false, .maxSpeed = 80}, false);
+    intake.set_state_and_move(Intake::State::MIDDLE_AUTO);
+    pros::delay(1000);
+    intake.set_state_and_move(Intake::State::OUTTAKING);
+    pros::delay(200);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    chassis.moveToPoint(-48, 52, 2000, { .maxSpeed = 80});
+    chassis.turnToHeading(-90, 700);
+    lil_krith.set_value(true);
+    chassis.moveToPoint(-70, 52, 1000);
+    distanceReset(20, -60, 52, -90);
+    chassis.moveToPoint(-25, 52.5, 1200, {.forwards = false, .minSpeed = 80}, false);
+    wing.set_value(false);
+    lil_krith.set_value(false);
 }
 
 void skills() { 
