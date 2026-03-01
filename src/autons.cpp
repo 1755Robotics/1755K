@@ -183,7 +183,46 @@ void rightFourBall()  {
    
 };
 void rightSeven() {
-    
+    chassis.setPose(-48, -15.5, 0, false);
+    pros::lcd::print(0, "Running 4 Ball Wing");
+    pros::delay(300);
+    wing.set_value(true);
+    lil_krith.set_value(true);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    chassis.moveToPoint(-48, -49.8, 2000, {.forwards = false, .maxSpeed = 80});
+    chassis.turnToHeading(-90, 700);
+    chassis.moveToPoint(-63, -49.8, 1000, {.maxSpeed = 70});
+    pros::delay(750);
+    distanceReset(15, -57, -49, -90);
+
+
+    chassis.moveToPoint(-24, -49.5, 1100, {.forwards = false, .maxSpeed = 70},false);
+    wing.set_value(false);
+    intake.set_state_and_move(Intake::State::INTAKING);
+    lil_krith.set_value(false);
+    pros::delay(1000);
+    distanceReset(40, -26, -50, -90);
+
+    chassis.turnToHeading(0, 600);
+    wing.set_value(true);
+    chassis.moveToPoint(-24, -24, 2000, {.maxSpeed = 80});
+    pros::Task([] {
+        pros::delay(400);
+        lil_krith.set_value(true);
+        pros::delay(400);
+        lil_krith.set_value(false);
+    });
+    chassis.turnToHeading(45, 600);
+    intake.set_state_and_move(Intake::State::NONE);
+    chassis.moveToPoint(-8, -8, 1000, {.maxSpeed = 70});
+    chassis.moveToPoint(-9, -9, 400, {.forwards = false, .maxSpeed = 70});
+    intake.set_state_and_move(Intake::State::OUTTAKING);
+    pros::delay(1200);
+    chassis.turnToHeading(45, 200);
+    chassis.moveToPoint(-39.5, -37, 1000, {.forwards = false, .maxSpeed = 70});
+    wing.set_value(false);
+    chassis.turnToHeading(90, 700);
+    chassis.moveToPoint(-8, -38.5, 1000, {.maxSpeed = 90});
 
 }
 
