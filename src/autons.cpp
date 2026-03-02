@@ -72,7 +72,7 @@ void leftSeven() {
     intake.set_state_and_move(Intake::State::INTAKING);
     chassis.moveToPoint(48, -48, 2000, {.forwards = false, .maxSpeed = 100,});
     chassis.turnToHeading(90, 700);
-    chassis.moveToPoint(71, -48, 1000, {.maxSpeed = 60});
+    chassis.moveToPoint(71, -48, 1300, {.maxSpeed = 70});
     pros::delay(200);
     chassis.moveToPoint(27, -48, 1500, {.forwards = false, .maxSpeed = 70},false);
     wing.set_value(false);
