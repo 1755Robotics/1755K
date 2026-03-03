@@ -9,6 +9,15 @@ void distanceReset(double range, double x, double y, double theta){
         chassis.setPose(x, y, theta);
     }
 }
+
+void moveToPointAndTurn(double x, double y, double timeout, double theta) {
+    float magnitude = sqrt(x * x + y * y);
+    for (int n = 1; magnitude / pow(2, n) >= 6; n++) {
+        float ratio = 1 / pow(2, n);
+        chassis.moveToPoint(x, y, timeout, {.maxSpeed = 127*ratio, .minSpeed = 16*ratio, .earlyExitRange = magnitude*ratio});
+    }
+    chassis.turnToHeading(theta, 1000);
+}
 // Global selected auton
 AutonRoutine selectedAuton = AutonRoutine::None;
 //15.5 x 13.6
@@ -441,6 +450,23 @@ void ang_pid_tuning_test() {
     pros::delay(100);
     chassis.turnToHeading(90, 2000);
 }
+void slewTest() {
+    chassis.setPose(0, 0, 0); 
+    pros::delay(100);
+    // chassis.moveToPoint(0, 48, 3000, {.minSpeed = 8, .earlyExitRange = 24});
+    // chassis.moveToPoint(0, 48, 3000, {.maxSpeed = 64, .minSpeed = 4, .earlyExitRange = 12});
+    // chassis.moveToPoint(0, 48, 3000, {.maxSpeed = 32, .minSpeed = 2, .earlyExitRange = 6});
+    // chassis.turnToHeading(90, 3000);
+
+    // chassis.moveToPoint(0, 24, 3000, {.maxSpeed = 64, .minSpeed = 8, .earlyExitRange = 12});
+    // chassis.moveToPoint(0, 24, 3000, {.maxSpeed = 32, .minSpeed = 4, .earlyExitRange = 6});
+    // chassis.turnToHeading(90, 1000);
+
+    // chassis.moveToPoint(0, 12, 2000, {.maxSpeed = 64, .minSpeed = 4, .earlyExitRange = 6});
+    // chassis.turnToHeading(90, 1000);
+
+    moveToPointAndTurn(0, 36, 3000, 90);
+}
 
 // ------------------------
 // Auton registry
@@ -461,6 +487,7 @@ static AutonEntry autons[] = {
     {"Skills",     AutonRoutine::Skills,    skills},
     {"Linear PID", AutonRoutine::LinPID, lin_pid_tuning_test},
     {"Angular PID", AutonRoutine::AngPID, ang_pid_tuning_test},
+    {"Slew Test", AutonRoutine::SlewTest, slewTest},
 };
 
 static constexpr int AUTON_COUNT =
@@ -470,7 +497,7 @@ static constexpr int AUTON_COUNT =
 // Autonomous selector task
 // ------------------------
 void autonSelectorTask(void*) {
-    int index = 0;  // -1 = None
+    int index = 9;  // -1 = None
     uint8_t lastButtons = pros::lcd::read_buttons();
 
     while (true) {

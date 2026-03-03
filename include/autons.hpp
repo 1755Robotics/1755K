@@ -18,6 +18,7 @@ enum class AutonRoutine {
     Skills,
     LinPID,
     AngPID,
+    SlewTest,
     None,
 };
 
@@ -30,11 +31,14 @@ void startAutonSelector();      // Select auton during pre-auton
 void runSelectedAuton();   // Run the selected auton
 
 // Autons
-void leftQual();
-void rightQual();
-void leftElim();
-void rightElim();
+void leftFourBall();
+void rightFourBall();
+void leftSeven();
+void rightSeven();
+void leftAWP();
+void rightAWP();
 void autonSkills();
 void lin_pid_tuning_test();
 void ang_pid_tuning_test();
+void slewTest();
 

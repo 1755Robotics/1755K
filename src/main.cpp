@@ -46,24 +46,24 @@ Intake intake({4, -8, 20}, {-20});
 // );
 lemlib::ControllerSettings linearController(  13, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              20, // derivative gain (kD)
+                                              35, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in inches
                                               500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              10 // maximum acceleration (slew)
 );
 
 lemlib::ControllerSettings angularController( 3.8, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              31, // derivative gain (kD)
+                                              40, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in inches
                                               500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              10 // maximum acceleration (slew)
 );
 
 // sensors for odometry
