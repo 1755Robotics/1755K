@@ -1,6 +1,7 @@
 #include "autons.hpp"
 #include "main.h"
 
+
 void distanceReset(double range, double x, double y, double theta){
     double rangeMM = range * 25.4;
     double distance = distance_sensor.get();
@@ -12,9 +13,10 @@ void distanceReset(double range, double x, double y, double theta){
 
 void moveToPointAndTurn(double x, double y, double timeout, double theta) {
     float magnitude = sqrt(x * x + y * y);
-    for (int n = 1; magnitude / pow(2, n) >= 6; n++) {
+    float baseExit = std::min(magnitude/2, 24.0f);
+    for (int n = 0; baseExit / pow(2, n) >= 6; n++) {
         float ratio = 1 / pow(2, n);
-        chassis.moveToPoint(x, y, timeout, {.maxSpeed = 127*ratio, .minSpeed = 16*ratio, .earlyExitRange = magnitude*ratio});
+        chassis.moveToPoint(x, y, timeout, {.maxSpeed = 127*ratio, .minSpeed = 16*ratio, .earlyExitRange = baseExit*ratio});
     }
     chassis.turnToHeading(theta, 1000);
 }
@@ -465,7 +467,7 @@ void slewTest() {
     // chassis.moveToPoint(0, 12, 2000, {.maxSpeed = 64, .minSpeed = 4, .earlyExitRange = 6});
     // chassis.turnToHeading(90, 1000);
 
-    moveToPointAndTurn(0, 36, 3000, 90);
+    moveToPointAndTurn(0, 72, 3000, 90);
 }
 
 // ------------------------
