@@ -11,15 +11,38 @@ void distanceReset(double range, double x, double y, double theta){
     }
 }
 
-void moveToPointAndTurn(double x, double y, double timeout, double theta) {
+// void moveToPointAndTurn(double x, double y, double timeout, double theta, lemlib::MoveToPointParams params = {}, bool async = true) {
+//     float magnitude = sqrt(x * x + y * y);
+//     float baseExit = std::min(magnitude/2, 20.0f);
+//     float startSpeed = (magnitude < 24.0f) ? 80.0f : 127.0f;
+//     float ratio = 1.0f;
+//     for (int n = 0; baseExit / pow(2, n) >= 6; n++) {
+//         chassis.moveToPoint(x, y, timeout, {.forwards = params.forwards, .maxSpeed = startSpeed*ratio, .minSpeed = 16*ratio, .earlyExitRange = baseExit*ratio}, async);
+//         ratio *= 0.5;
+//     }
+//     chassis.turnToHeading(theta, 1000, {}, async);
+// }
+
+// void moveToPoint(double x, double y, double timeout, lemlib::MoveToPointParams params = {}, bool async = true) {
+//     float magnitude = sqrt(x * x + y * y);
+//     float baseExit = std::min(magnitude/2, 20.0f);
+//     float startSpeed = (magnitude < 24.0f) ? 80.0f : 127.0f;
+//     float ratio = 1.0f;
+//     for (int n = 0; baseExit / pow(2, n) >= 6 ; n++) {
+//         chassis.moveToPoint(x, y, timeout, {.forwards = params.forwards, .maxSpeed = startSpeed*ratio, .minSpeed = 16*ratio, .earlyExitRange = baseExit*ratio});
+//         ratio *= 0.5;
+//     }
+//     chassis.moveToPoint(x, y, timeout, {.forwards = params.forwards, .maxSpeed = startSpeed*ratio, .minSpeed = params.minSpeed, .earlyExitRange = params.earlyExitRange}, async);
+// }
+
+void moveToPoint(double x, double y, double timeout, lemlib::MoveToPointParams params = {}, bool async = true) {
     float magnitude = sqrt(x * x + y * y);
-    float baseExit = std::min(magnitude/2, 24.0f);
-    for (int n = 0; baseExit / pow(2, n) >= 6; n++) {
-        float ratio = 1 / pow(2, n);
-        chassis.moveToPoint(x, y, timeout, {.maxSpeed = 127*ratio, .minSpeed = 16*ratio, .earlyExitRange = baseExit*ratio});
-    }
-    chassis.turnToHeading(theta, 1000);
+    float baseExit = std::min(magnitude/2, 18.0f);
+    float startSpeed = std::clamp((magnitude-12) * 2.0f, 60.0f, 127.0f);
+    chassis.moveToPoint(x, y, timeout, {.forwards = params.forwards, .maxSpeed = startSpeed, .minSpeed = 16, .earlyExitRange = baseExit});
+    chassis.moveToPoint(x, y, timeout, {.forwards = params.forwards, .maxSpeed = startSpeed/1.6f, .minSpeed = params.minSpeed, .earlyExitRange = params.earlyExitRange}, async);
 }
+
 // Global selected auton
 AutonRoutine selectedAuton = AutonRoutine::None;
 //15.5 x 13.6
@@ -455,19 +478,7 @@ void ang_pid_tuning_test() {
 void slewTest() {
     chassis.setPose(0, 0, 0); 
     pros::delay(100);
-    // chassis.moveToPoint(0, 48, 3000, {.minSpeed = 8, .earlyExitRange = 24});
-    // chassis.moveToPoint(0, 48, 3000, {.maxSpeed = 64, .minSpeed = 4, .earlyExitRange = 12});
-    // chassis.moveToPoint(0, 48, 3000, {.maxSpeed = 32, .minSpeed = 2, .earlyExitRange = 6});
-    // chassis.turnToHeading(90, 3000);
-
-    // chassis.moveToPoint(0, 24, 3000, {.maxSpeed = 64, .minSpeed = 8, .earlyExitRange = 12});
-    // chassis.moveToPoint(0, 24, 3000, {.maxSpeed = 32, .minSpeed = 4, .earlyExitRange = 6});
-    // chassis.turnToHeading(90, 1000);
-
-    // chassis.moveToPoint(0, 12, 2000, {.maxSpeed = 64, .minSpeed = 4, .earlyExitRange = 6});
-    // chassis.turnToHeading(90, 1000);
-
-    moveToPointAndTurn(0, 72, 3000, 90);
+    moveToPoint(0, 60, 3000);
 }
 
 // ------------------------
