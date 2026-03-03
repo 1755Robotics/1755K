@@ -38,7 +38,7 @@ void distanceReset(double range, double x, double y, double theta){
 void moveToPoint(double x, double y, double timeout, lemlib::MoveToPointParams params = {}, bool async = true) {
     float magnitude = sqrt(x * x + y * y);
     float baseExit = std::min(magnitude/2, 18.0f);
-    float startSpeed = std::clamp((magnitude-12) * 2.0f, 60.0f, 127.0f);
+    float startSpeed = std::clamp(magnitude * 3.0f, 60.0f, 127.0f);
     chassis.moveToPoint(x, y, timeout, {.forwards = params.forwards, .maxSpeed = startSpeed, .minSpeed = 16, .earlyExitRange = baseExit});
     chassis.moveToPoint(x, y, timeout, {.forwards = params.forwards, .maxSpeed = startSpeed/1.6f, .minSpeed = params.minSpeed, .earlyExitRange = params.earlyExitRange}, async);
 }
