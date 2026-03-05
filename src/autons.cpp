@@ -107,38 +107,36 @@ void leftSeven() {
     lil_krith.set_value(true);
     lil_krith.set_value(true);
     intake.set_state_and_move(Intake::State::INTAKING);
-    moveToPoint(48, -48, 2000, {.forwards = false, .maxSpeed = 100,});
+    moveToPoint(48, -46, 2000, {.forwards = false, .minSpeed =10, .earlyExitRange = 6});
     chassis.turnToHeading(90, 700);
-    moveToPoint(71, -48, 1300, {.maxSpeed = 70});
+    moveToPoint(62, -48.5, 800);
     pros::delay(200);
-    moveToPoint(27, -48, 1500, {.forwards = false, .maxSpeed = 70},false);
+    
+
+    moveToPoint(24, -48, 1500, {.forwards = false});
+    pros::delay(500);
     wing.set_value(false);
     lil_krith.set_value(false);
     pros::delay(1000);
     wing.set_value(true);
 
     chassis.turnToHeading(0, 700);
-    moveToPoint(24, -24, 2000, {.maxSpeed = 70});
-    // pros::Task([] {
-    //     pros::delay(400);
-    //     lil_krith.set_value(true);
-    //     pros::delay(200);
-    //     lil_krith.set_value(false);
-    // });
+    moveToPoint(24, -24, 2000);
     chassis.turnToHeading(135, 1000);
-    moveToPoint(8.7, -7.5, 2000,{.forwards = false, .maxSpeed = 60});
+    moveToPoint(9.2, -8.4, 2000,{.forwards = false});
     pros::delay(700);
-    intake.set_state_and_move(Intake::State::OUTTAKING_SLOW);
-    pros::delay(100);
+    intake.set_state_and_move(Intake::State::OUTTAKING);
+    pros::delay(200);
     intake.set_state_and_move(Intake::State::MIDDLE_AUTO);
     pros::delay(1000);
     intake.set_state_and_move(Intake::State::NONE);
 
     
-    moveToPoint(36, -38, 2000, {.maxSpeed = 70}); 
+    moveToPoint(36, -37.6, 2000); 
     chassis.turnToHeading(90, 700);
     wing.set_value(false);
-    moveToPoint(10, -40, 5000, {.forwards = false, .maxSpeed = 40});
+    moveToPoint(13.5, -38, 5000, {.forwards = false, .minSpeed = 10, .earlyExitRange = 3}, false);
+    chassis.turnToHeading(108, 1000);
 
 }
 
@@ -510,7 +508,7 @@ static constexpr int AUTON_COUNT =
 // Autonomous selector task
 // ------------------------
 void autonSelectorTask(void*) {
-    int index = 5;  // -1 = None
+    int index = 2;  // -1 = None
     uint8_t lastButtons = pros::lcd::read_buttons();
 
     while (true) {
