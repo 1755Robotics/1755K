@@ -47,6 +47,8 @@
 extern pros::adi::DigitalOut wing;          
 extern pros::adi::DigitalOut lil_krith;
 extern pros::Distance distance_sensor;
+extern pros::Rotation horizontalEnc;
+extern pros::Rotation verticalEnc;
 
 extern lemlib::Chassis chassis;
 extern Intake intake;

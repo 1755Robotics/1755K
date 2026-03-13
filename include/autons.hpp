@@ -13,6 +13,7 @@ enum class AutonRoutine {
     RightFourBall,
     LeftSeven,
     RightSeven,
+    LeftSevenRush,
     LeftAWP,
     RightAWP,
     Skills,
@@ -35,6 +36,7 @@ void leftFourBall();
 void rightFourBall();
 void leftSeven();
 void rightSeven();
+void leftSevenRush();
 void leftAWP();
 void rightAWP();
 void autonSkills();

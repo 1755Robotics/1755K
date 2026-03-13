@@ -63,7 +63,7 @@ lemlib::ControllerSettings angularController( 3.8, // proportional gain (kP)
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in inches
                                               500, // large error range timeout, in milliseconds
-                                              10 // maximum acceleration (slew)
+                                              20 // maximum acceleration (slew)
 );
 
 // sensors for odometry
@@ -82,8 +82,8 @@ lemlib::ExpoDriveCurve throttleCurve(3, // joystick deadband out of 127
 
 // input curve for steer input during driver control
 lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband out of 127
-                                  10, // minimum output where drivetrain will move out of 127
-                                  1.019 // expo curve gain
+                                  2, // minimum output where drivetrain will move out of 127
+                                  1.0 // expo curve gain
 );
 
 // create the chassis
@@ -170,7 +170,7 @@ void opcontrol() {
 		forwardOut = lemlib::slew(leftY, forwardOut, FORWARD_SLEW);
 
         // move the chassis with curvature drive
-        chassis.arcade(forwardOut, rightX);
+        chassis.arcade(forwardOut, rightX,0.7);
     	intake.opcontrol(master);
     	
 		if (!pros::competition::is_connected()) {
