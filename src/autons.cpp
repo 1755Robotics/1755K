@@ -20,72 +20,75 @@ static constexpr int    MIN_CONFIDENCE         = 30;
 static constexpr double MAX_CORRECTION_IN      = 5.0;
 
 void distanceReset(double range, double x, double y, double theta) {
-    // Euclidean gate wow
     lemlib::Pose current = chassis.getPose();
-    double dx   = x - current.x;
-    double dy   = y - current.y;
-    double dist = sqrt(dx * dx + dy * dy);
-    if (dist > MAX_CORRECTION_IN) return;
+    
+    // euclidean 
+    double dx = x - current.x, dy = y - current.y;
+    if (sqrt(dx*dx + dy*dy) > MAX_CORRECTION_IN) return;
 
-    // Read sensors
-    double L_in = dist_left.get()  / 25.4;
-    double R_in = dist_right.get() / 25.4;
-    double F_in = dist_front.get() / 25.4;
-    double B_in = dist_back.get()  / 25.4;
+    // front is at 0 degrees, right is 90, back 180, left 270 relative to robot front
+    struct SensorMapping { pros::Distance& ref; double offset; double angle_offset; };
+    SensorMapping robot_sensors[] = {
+        {dist_front, FRONT_SENSOR_OFFSET_IN, 0.0},
+        {dist_right, RIGHT_SENSOR_OFFSET_IN, 90.0},
+        {dist_back,  BACK_SENSOR_OFFSET_IN,  180.0},
+        {dist_left,  LEFT_SENSOR_OFFSET_IN,  270.0}
+    };
 
-    int    L_conf = dist_left.get_confidence();
-    int    R_conf = dist_right.get_confidence();
-    int    F_conf = dist_front.get_confidence();
-    int    B_conf = dist_back.get_confidence();
+    // 0:+Y (north), 1:+X (east), 2:-Y (south), 3:-X (west)
+    double wall_dist[4] = {-1.0, -1.0, -1.0, -1.0};
+    
+    // assign sensor to direciton based on heading
+    for (auto& s : robot_sensors) {
+        // find global heading of a specific sensor
+        double sensor_global_angle = fmod(current.theta + s.angle_offset, 360.0);
+        if (sensor_global_angle < 0) sensor_global_angle += 360.0;
 
-    bool   L_large = dist_left.get_object_size()  > 200;
-    bool   R_large = dist_right.get_object_size() > 200;
-    bool   F_large = dist_front.get_object_size() > 200;
-    bool   B_large = dist_back.get_object_size()  > 200;
+        // determine(0, 90, 180, 270) this sensor is currently facing
+        int direction = (int)(round(sensor_global_angle / 90.0)) % 4;
+        double diff = fabs(sensor_global_angle - (direction * 90.0));
+        if (diff > 45) diff = 90.0 - diff; // wrap around
 
-    // check left+right measurement validity
-    double expected_x_sum = FIELD_IN
-                            - 2.0 * ROBOT_HALF_W_IN
-                            + (LEFT_SENSOR_OFFSET_IN - RIGHT_SENSOR_OFFSET_IN);
+        // only use sensor if it is aligned within 10 degrees of a wall and sees a large object (can remove this part if it doesnt work)
+        if (diff < 10.0 && s.ref.get_confidence() >= MIN_CONFIDENCE && s.ref.get_object_size() > 200) {
+            wall_dist[direction] = s.ref.get() / 25.4;
+        }
+    }
 
-    bool x_sum_ok  = std::abs((L_in + R_in) - expected_x_sum) < SUM_TOLERANCE_IN;
-    bool x_size_ok = L_large && R_large;
-    bool x_conf_ok = L_conf >= MIN_CONFIDENCE && R_conf >= MIN_CONFIDENCE;
-    bool x_range_ok = (L_in < range) || (R_in < range); 
-    bool x_valid   = x_sum_ok && x_size_ok && x_conf_ok && x_range_ok;
-
-    // check front+back measurement validity
-    double expected_y_sum = FIELD_IN
-                            - 2.0 * ROBOT_HALF_L_IN
-                            + (BACK_SENSOR_OFFSET_IN - FRONT_SENSOR_OFFSET_IN);
-
-    bool y_sum_ok  = std::abs((F_in + B_in) - expected_y_sum) < SUM_TOLERANCE_IN;
-    bool y_size_ok = F_large && B_large;
-    bool y_conf_ok = F_conf >= MIN_CONFIDENCE && B_conf >= MIN_CONFIDENCE;
-    bool y_range_ok = (F_in < range) || (B_in < range);
-    bool y_valid   = y_sum_ok && y_size_ok && y_conf_ok && y_range_ok;
-
-    // make corrected positions for the axes that are valid
+    // 4. calculate position based on aligned sensors
     double new_x = current.x;
     double new_y = current.y;
+    bool x_valid = false, y_valid = false;
 
-    if (x_valid) {
-        double x_from_left  = -72.0 + (L_in + ROBOT_HALF_W_IN + LEFT_SENSOR_OFFSET_IN);
-        double x_from_right =  72.0 - (R_in + ROBOT_HALF_W_IN - RIGHT_SENSOR_OFFSET_IN);
-        new_x = (x_from_left + x_from_right) / 2.0;
+    // validate and calculate X-axis (global east (+X) and global west (-X) sensors)
+    if (wall_dist[1] > 0 && wall_dist[3] > 0) { 
+        double x_from_right =  72.0 - (wall_dist[1] + ROBOT_HALF_W_IN + RIGHT_SENSOR_OFFSET_IN); 
+        double x_from_left  = -72.0 + (wall_dist[3] + ROBOT_HALF_W_IN + LEFT_SENSOR_OFFSET_IN);
+        
+        double expected_x_sum = FIELD_IN - 2.0 * ROBOT_HALF_W_IN;
+        if (fabs((wall_dist[1] + wall_dist[3]) - expected_x_sum) < SUM_TOLERANCE_IN) {
+            new_x = (x_from_left + x_from_right) / 2.0;
+            x_valid = (wall_dist[1] < range || wall_dist[3] < range);
+        }
     }
 
-    if (y_valid) {
-        double y_from_back  = -72.0 + (B_in + ROBOT_HALF_L_IN + BACK_SENSOR_OFFSET_IN);
-        double y_from_front =  72.0 - (F_in + ROBOT_HALF_L_IN - FRONT_SENSOR_OFFSET_IN);
-        new_y = (y_from_back + y_from_front) / 2.0;
+    // validate and calculate Y-axis (global north (+Y) and global south (-Y) sensors)
+    if (wall_dist[0] > 0 && wall_dist[2] > 0) { 
+        double y_from_front =  72.0 - (wall_dist[0] + ROBOT_HALF_L_IN + FRONT_SENSOR_OFFSET_IN);
+        double y_from_back  = -72.0 + (wall_dist[2] + ROBOT_HALF_L_IN + BACK_SENSOR_OFFSET_IN);
+        
+        double expected_y_sum = FIELD_IN - 2.0 * ROBOT_HALF_L_IN;
+        if (fabs((wall_dist[0] + wall_dist[2]) - expected_y_sum) < SUM_TOLERANCE_IN) {
+            new_y = (y_from_back + y_from_front) / 2.0;
+            y_valid = (wall_dist[0] < range || wall_dist[2] < range);
+        }
     }
 
-    // oonly apply if at axises is valid
-    if (!x_valid && !y_valid) return;
-
-    chassis.setPose(new_x, new_y, theta);
-    pros::delay(100);
+    // 5. finalize position update
+    if (x_valid || y_valid) {
+        chassis.setPose(new_x, new_y, theta);
+        pros::delay(100);
+    }
 }
 
 // void moveToPointAndTurn(double x, double y, double timeout, double theta, lemlib::MoveToPointParams params = {}, bool async = true) {
