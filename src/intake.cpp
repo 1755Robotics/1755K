@@ -15,7 +15,7 @@ void Intake::move() {
             break;
         case State::MIDDLE_SLOW:
             intake_motors.move_voltage(12000);  // 8V forward
-            scoring_motors.move_voltage(2500); // 6 reverse
+            scoring_motors.move_voltage(3000); // 6 reverse
             break;
          case State::MIDDLE_AUTO:
             intake_motors.move_voltage(12000);  // 8V forward
