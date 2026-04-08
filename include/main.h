@@ -46,7 +46,10 @@
 
 extern pros::adi::DigitalOut wing;          
 extern pros::adi::DigitalOut lil_krith;
-extern pros::Distance distance_sensor;
+extern pros::Distance dist_left;
+extern pros::Distance dist_right;
+extern pros::Distance dist_front;
+extern pros::Distance dist_back;
 extern pros::Rotation horizontalEnc;
 extern pros::Rotation verticalEnc;
 
