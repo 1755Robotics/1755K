@@ -6,85 +6,113 @@ static constexpr double FIELD_IN               = 144.0;
 static constexpr double ROBOT_HALF_W_IN        = 6.5;   // measure and update
 static constexpr double ROBOT_HALF_L_IN        = 6.5;   // measure and update
 
-// gotta fill in sensor offsets from tracking center
-// Positive X is toward the right side of the robot
-// Positive Y is toward the front of the robot
-static constexpr double LEFT_SENSOR_OFFSET_IN  = 0.0;
-static constexpr double RIGHT_SENSOR_OFFSET_IN = 0.0;
-static constexpr double FRONT_SENSOR_OFFSET_IN = 0.0;
-static constexpr double BACK_SENSOR_OFFSET_IN  = 0.0;
-
 // thresholds for validity checks
 static constexpr double SUM_TOLERANCE_IN       = 3.5;
 static constexpr int    MIN_CONFIDENCE         = 30;
 static constexpr double MAX_CORRECTION_IN      = 5.0;
 
-void distanceReset(double range, double x, double y, double theta) {
-    // Euclidean gate wow
+// Reads the current pose and corrects x/y using distance sensors.
+// Snaps sensor assignments to the nearest cardinal heading so body-frame
+// readings are correctly mapped to field axes.
+// range: max distance (in) a sensor may read and still be used for correction.
+// x, y: expected field position — used only as a Euclidean sanity gate.
+void distanceReset(double range, double x, double y) {
     lemlib::Pose current = chassis.getPose();
-    double dx   = x - current.x;
-    double dy   = y - current.y;
-    double dist = sqrt(dx * dx + dy * dy);
-    if (dist > MAX_CORRECTION_IN) return;
 
-    // Read sensors
+    // Euclidean gate: skip if odom is already far from the expected position
+    double dx = x - current.x;
+    double dy = y - current.y;
+    if (sqrt(dx * dx + dy * dy) > MAX_CORRECTION_IN) return;
+
+    // Read sensors (mm → in)
     double L_in = dist_left.get()  / 25.4;
     double R_in = dist_right.get() / 25.4;
     double F_in = dist_front.get() / 25.4;
     double B_in = dist_back.get()  / 25.4;
 
-    int    L_conf = dist_left.get_confidence();
-    int    R_conf = dist_right.get_confidence();
-    int    F_conf = dist_front.get_confidence();
-    int    B_conf = dist_back.get_confidence();
+    int  L_conf = dist_left.get_confidence();
+    int  R_conf = dist_right.get_confidence();
+    int  F_conf = dist_front.get_confidence();
+    int  B_conf = dist_back.get_confidence();
 
-    bool   L_large = dist_left.get_object_size()  > 200;
-    bool   R_large = dist_right.get_object_size() > 200;
-    bool   F_large = dist_front.get_object_size() > 200;
-    bool   B_large = dist_back.get_object_size()  > 200;
+    bool L_large = dist_left.get_object_size()  > 200;
+    bool R_large = dist_right.get_object_size() > 200;
+    bool F_large = dist_front.get_object_size() > 200;
+    bool B_large = dist_back.get_object_size()  > 200;
 
-    // check left+right measurement validity
-    double expected_x_sum = FIELD_IN
-                            - 2.0 * ROBOT_HALF_W_IN
-                            + (LEFT_SENSOR_OFFSET_IN - RIGHT_SENSOR_OFFSET_IN);
+    // Map body-frame sensors to field axes based on current heading.
+    // LemLib: theta=0=north(+Y), theta=90=east(+X), clockwise positive.
+    // Snap to nearest cardinal direction.
+    int heading = (int)(std::round(current.theta / 90.0)) * 90;
+    heading = ((heading % 360) + 360) % 360;
 
-    bool x_sum_ok  = std::abs((L_in + R_in) - expected_x_sum) < SUM_TOLERANCE_IN;
-    bool x_size_ok = L_large && R_large;
-    bool x_conf_ok = L_conf >= MIN_CONFIDENCE && R_conf >= MIN_CONFIDENCE;
-    bool x_range_ok = (L_in < range) || (R_in < range); 
-    bool x_valid   = x_sum_ok && x_size_ok && x_conf_ok && x_range_ok;
+    double xNeg_in, xPos_in, yNeg_in, yPos_in;
+    int    xNeg_conf, xPos_conf, yNeg_conf, yPos_conf;
+    bool   xNeg_large, xPos_large, yNeg_large, yPos_large;
+    double robot_half_x, robot_half_y;
 
-    // check front+back measurement validity
-    double expected_y_sum = FIELD_IN
-                            - 2.0 * ROBOT_HALF_L_IN
-                            + (BACK_SENSOR_OFFSET_IN - FRONT_SENSOR_OFFSET_IN);
+    switch (heading) {
+        case 0:   // north: L→x−  R→x+  B→y−  F→y+
+            xNeg_in = L_in;  xPos_in = R_in;  yNeg_in = B_in;  yPos_in = F_in;
+            xNeg_conf = L_conf; xPos_conf = R_conf; yNeg_conf = B_conf; yPos_conf = F_conf;
+            xNeg_large = L_large; xPos_large = R_large; yNeg_large = B_large; yPos_large = F_large;
+            robot_half_x = ROBOT_HALF_W_IN; robot_half_y = ROBOT_HALF_L_IN;
+            break;
+        case 90:  // east:  B→x−  F→x+  R→y−  L→y+
+            xNeg_in = B_in;  xPos_in = F_in;  yNeg_in = R_in;  yPos_in = L_in;
+            xNeg_conf = B_conf; xPos_conf = F_conf; yNeg_conf = R_conf; yPos_conf = L_conf;
+            xNeg_large = B_large; xPos_large = F_large; yNeg_large = R_large; yPos_large = L_large;
+            robot_half_x = ROBOT_HALF_L_IN; robot_half_y = ROBOT_HALF_W_IN;
+            break;
+        case 180: // south: R→x−  L→x+  F→y−  B→y+
+            xNeg_in = R_in;  xPos_in = L_in;  yNeg_in = F_in;  yPos_in = B_in;
+            xNeg_conf = R_conf; xPos_conf = L_conf; yNeg_conf = F_conf; yPos_conf = B_conf;
+            xNeg_large = R_large; xPos_large = L_large; yNeg_large = F_large; yPos_large = B_large;
+            robot_half_x = ROBOT_HALF_W_IN; robot_half_y = ROBOT_HALF_L_IN;
+            break;
+        case 270: // west:  F→x−  B→x+  L→y−  R→y+
+            xNeg_in = F_in;  xPos_in = B_in;  yNeg_in = L_in;  yPos_in = R_in;
+            xNeg_conf = F_conf; xPos_conf = B_conf; yNeg_conf = L_conf; yPos_conf = R_conf;
+            xNeg_large = F_large; xPos_large = B_large; yNeg_large = L_large; yPos_large = R_large;
+            robot_half_x = ROBOT_HALF_L_IN; robot_half_y = ROBOT_HALF_W_IN;
+            break;
+        default:
+            return; // not aligned to a cardinal heading
+    }
 
-    bool y_sum_ok  = std::abs((F_in + B_in) - expected_y_sum) < SUM_TOLERANCE_IN;
-    bool y_size_ok = F_large && B_large;
-    bool y_conf_ok = F_conf >= MIN_CONFIDENCE && B_conf >= MIN_CONFIDENCE;
-    bool y_range_ok = (F_in < range) || (B_in < range);
-    bool y_valid   = y_sum_ok && y_size_ok && y_conf_ok && y_range_ok;
+    // Validate X axis. Only require large object size from sensors within range
+    // (far-wall sensors legitimately have small object size).
+    bool x_sum_ok   = std::abs((xNeg_in + xPos_in) - (FIELD_IN - 2.0 * robot_half_x)) < SUM_TOLERANCE_IN;
+    bool x_conf_ok  = xNeg_conf >= MIN_CONFIDENCE && xPos_conf >= MIN_CONFIDENCE;
+    bool x_range_ok = (xNeg_in < range) || (xPos_in < range);
+    bool x_size_ok  = (xNeg_in < range ? xNeg_large : true) && (xPos_in < range ? xPos_large : true);
+    bool x_valid    = x_sum_ok && x_conf_ok && x_range_ok && x_size_ok;
 
-    // make corrected positions for the axes that are valid
+    // Validate Y axis
+    bool y_sum_ok   = std::abs((yNeg_in + yPos_in) - (FIELD_IN - 2.0 * robot_half_y)) < SUM_TOLERANCE_IN;
+    bool y_conf_ok  = yNeg_conf >= MIN_CONFIDENCE && yPos_conf >= MIN_CONFIDENCE;
+    bool y_range_ok = (yNeg_in < range) || (yPos_in < range);
+    bool y_size_ok  = (yNeg_in < range ? yNeg_large : true) && (yPos_in < range ? yPos_large : true);
+    bool y_valid    = y_sum_ok && y_conf_ok && y_range_ok && y_size_ok;
+
+    if (!x_valid && !y_valid) return;
+
     double new_x = current.x;
     double new_y = current.y;
 
     if (x_valid) {
-        double x_from_left  = -72.0 + (L_in + ROBOT_HALF_W_IN + LEFT_SENSOR_OFFSET_IN);
-        double x_from_right =  72.0 - (R_in + ROBOT_HALF_W_IN - RIGHT_SENSOR_OFFSET_IN);
-        new_x = (x_from_left + x_from_right) / 2.0;
+        double x_from_neg = -72.0 + xNeg_in + robot_half_x;
+        double x_from_pos =  72.0 - xPos_in - robot_half_x;
+        new_x = (x_from_neg + x_from_pos) / 2.0;
     }
 
     if (y_valid) {
-        double y_from_back  = -72.0 + (B_in + ROBOT_HALF_L_IN + BACK_SENSOR_OFFSET_IN);
-        double y_from_front =  72.0 - (F_in + ROBOT_HALF_L_IN - FRONT_SENSOR_OFFSET_IN);
-        new_y = (y_from_back + y_from_front) / 2.0;
+        double y_from_neg = -72.0 + yNeg_in + robot_half_y;
+        double y_from_pos =  72.0 - yPos_in - robot_half_y;
+        new_y = (y_from_neg + y_from_pos) / 2.0;
     }
 
-    // oonly apply if at axises is valid
-    if (!x_valid && !y_valid) return;
-
-    chassis.setPose(new_x, new_y, theta);
+    chassis.setPose(new_x, new_y, current.theta);
     pros::delay(100);
 }
 
@@ -144,7 +172,7 @@ void leftFourBall()   {
     intake.set_state_and_move(Intake::State::INTAKING);
     lil_krith.set_value(false);
     pros::delay(500);
-    distanceReset(40, 26, -49,  90);
+    distanceReset(40, 26, -49);
 
     chassis.turnToHeading(30, 600);
     moveToPoint(36, -39, 2000);
@@ -171,7 +199,7 @@ void leftSeven() {
     intake.set_state_and_move(Intake::State::INTAKING);
     lil_krith.set_value(false);
     pros::delay(600);
-    distanceReset(38, 26, -49,  90);
+    distanceReset(38, 26, -49);
     wing.set_value(true);
 
     chassis.turnToHeading(-10, 900);
@@ -221,7 +249,7 @@ void leftSevenRush()   {
     wing.set_value(false);
     lil_krith.set_value(false);
     pros::delay(1000);
-    distanceReset(40, 26, -49,  90);
+    distanceReset(40, 26, -49);
 
     chassis.turnToHeading(30, 600);
     moveToPoint(36, -38, 2000);
@@ -247,7 +275,7 @@ void leftAWP() {
     intake.set_state_and_move(Intake::State::INTAKING);
     lil_krith.set_value(false);
     pros::delay(700);
-    distanceReset(38, 26, -49,  90);
+    distanceReset(38, 26, -49);
     wing.set_value(true);
 
     chassis.turnToHeading(-10, 900);
@@ -297,7 +325,7 @@ void rightFourBall()  {
     intake.set_state_and_move(Intake::State::INTAKING);
     lil_krith.set_value(false);
     pros::delay(400);
-    distanceReset(40, -26, -48.5, -90);
+    distanceReset(40, -26, -48.5);
 
     chassis.turnToHeading(-150, 600);
     moveToPoint(-36, -57.5, 2000);
@@ -322,7 +350,7 @@ void rightSeven() {
     intake.set_state_and_move(Intake::State::INTAKING);
     lil_krith.set_value(false);
     pros::delay(400);
-    distanceReset(40, -26, -48.5, -90);
+    distanceReset(40, -26, -48.5);
 
     //middle goal
     chassis.turnToHeading(0, 600);
@@ -374,7 +402,7 @@ void rightAWP() {
     intake.set_state_and_move(Intake::State::INTAKING);
     lil_krith.set_value(false);
     pros::delay(800);
-    distanceReset(38, -26, -48.5, -90);
+    distanceReset(38, -26, -48.5);
 
     chassis.turnToHeading(5, 1000);
     wing.set_value(true);
@@ -390,7 +418,7 @@ void rightAWP() {
     wing.set_value(false);
     intake.set_state_and_move(Intake::State::INTAKING);
     pros::delay(1000);
-    distanceReset(38, -26, 49,  -90);
+    distanceReset(38, -26, 49);
 
     moveToPoint(-70, 48.5, 1000);
     wing.set_value(true);
@@ -443,7 +471,7 @@ void skills() {
     pros::delay(700);
     wing.set_value(false);
     pros::delay(1000);
-    distanceReset(38, -26, 48, -90);
+    distanceReset(38, -26, 48);
 
     moveToPoint(-44, 48, 1500);
     wing.set_value(true);
@@ -476,7 +504,7 @@ void skills() {
     wing.set_value(false);
     pros::delay(1000);
     wing.set_value(true);
-    distanceReset(38, 26, -48, 90);
+    distanceReset(38, 26, -48);
 
     lil_krith.set_value(false);
     chassis.moveToPose(64,14, 0, 10000, {.minSpeed=127, .earlyExitRange = 4});
@@ -604,7 +632,7 @@ void exampleDistanceResetAuton() {
 
     // pass the expected Pose (24, 24, 0). 
     // the sensors won't correct if you're > 5 inches off since then something is wrong with measurement
-    distanceReset(40, 24, 24, 0);
+    distanceReset(40, 24, 24);
 
     // move in reverse somewhere else now that odom is corrected
     moveToPoint(0, 0, 2000, {.forwards = false});
