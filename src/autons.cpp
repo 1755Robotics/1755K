@@ -38,10 +38,10 @@ void distanceReset(double range, double x, double y, double theta) {
     int    F_conf = dist_front.get_confidence();
     int    B_conf = dist_back.get_confidence();
 
-    bool   L_large = dist_left.get_object_size()  == pros::E_DISTANCE_SIZE_LARGE;
-    bool   R_large = dist_right.get_object_size() == pros::E_DISTANCE_SIZE_LARGE;
-    bool   F_large = dist_front.get_object_size() == pros::E_DISTANCE_SIZE_LARGE;
-    bool   B_large = dist_back.get_object_size()  == pros::E_DISTANCE_SIZE_LARGE;
+    bool   L_large = dist_left.get_object_size()  > 200;
+    bool   R_large = dist_right.get_object_size() > 200;
+    bool   F_large = dist_front.get_object_size() > 200;
+    bool   B_large = dist_back.get_object_size()  > 200;
 
     // check left+right measurement validity
     double expected_x_sum = FIELD_IN
@@ -51,7 +51,8 @@ void distanceReset(double range, double x, double y, double theta) {
     bool x_sum_ok  = std::abs((L_in + R_in) - expected_x_sum) < SUM_TOLERANCE_IN;
     bool x_size_ok = L_large && R_large;
     bool x_conf_ok = L_conf >= MIN_CONFIDENCE && R_conf >= MIN_CONFIDENCE;
-    bool x_valid   = x_sum_ok && x_size_ok && x_conf_ok;
+    bool x_range_ok = (L_in < range) || (R_in < range); 
+    bool x_valid   = x_sum_ok && x_size_ok && x_conf_ok && x_range_ok;
 
     // check front+back measurement validity
     double expected_y_sum = FIELD_IN
@@ -61,7 +62,8 @@ void distanceReset(double range, double x, double y, double theta) {
     bool y_sum_ok  = std::abs((F_in + B_in) - expected_y_sum) < SUM_TOLERANCE_IN;
     bool y_size_ok = F_large && B_large;
     bool y_conf_ok = F_conf >= MIN_CONFIDENCE && B_conf >= MIN_CONFIDENCE;
-    bool y_valid   = y_sum_ok && y_size_ok && y_conf_ok;
+    bool y_range_ok = (F_in < range) || (B_in < range);
+    bool y_valid   = y_sum_ok && y_size_ok && y_conf_ok && y_range_ok;
 
     // make corrected positions for the axes that are valid
     double new_x = current.x;
