@@ -136,21 +136,21 @@ void leftSevenRush()   {
         lil_krith.set_value(true);
     });
     chassis.moveToPoint(18, -21, 2000, { .minSpeed =20});
-    chassis.turnToHeading(-225,500);
-    moveToPoint(46, -48.75, 2000, {.minSpeed = 10, .earlyExitRange = 2.5});
+    //chassis.turnToHeading(-225,500);
+    moveToPoint(46, -48, 2000, {.minSpeed = 10, .earlyExitRange = 2.5});
     chassis.turnToHeading(90, 1000);
-    moveToPoint(63, -48.75, 620, {.maxSpeed=50});
-    moveToPoint(18, -50.5, 2000, {.forwards = false});
-    pros::delay(300);
+    moveToPoint(63, -48, 620, {.maxSpeed=50});
+    moveToPoint(18, -48.3, 2000, {.forwards = false});
+    pros::delay(300);   
     wing.set_value(false);
     lil_krith.set_value(false);
     pros::delay(1000);
     distanceReset(40, 26, -49,  90);
 
     chassis.turnToHeading(30, 600);
-    moveToPoint(36, -39, 2000);
+    moveToPoint(36, -38, 2000);
     chassis.turnToHeading(90, 400);
-    moveToPoint(10, -39, 5000, {.forwards = false, .minSpeed = 10, .earlyExitRange = 6});
+    moveToPoint(10, -38, 5000, {.forwards = false, .minSpeed = 10, .earlyExitRange = 6});
     chassis.turnToHeading(135 ,200, {.maxSpeed = 42});
     intake.set_state_and_move(Intake::State::NONE);
 }
@@ -239,7 +239,7 @@ void rightSeven() {
     lil_krith.set_value(true);
     moveToPoint(-48, -47, 2000, {.forwards = false, .minSpeed =20, .earlyExitRange = 6});
     chassis.turnToHeading(-90, 700);
-    moveToPoint(-64, -48.5, 470);
+    moveToPoint(-68, -48.5, 570, {.maxSpeed = 55});
     moveToPoint(-24, -49, 2000, {.forwards = false});
     pros::delay(530);
     wing.set_value(false);
@@ -259,7 +259,10 @@ void rightSeven() {
         lil_krith.set_value(false);
     });
     chassis.turnToHeading(45, 600);
-    intake.set_state_and_move(Intake::State::NONE);
+    pros::Task([] {
+        pros::delay(100);
+        intake.set_state_and_move(Intake::State::NONE);
+    });
     moveToPoint(-8, -8, 1000);
     moveToPoint(-9, -9, 400, {.forwards = false});
     intake.set_state_and_move(Intake::State::OUTTAKING_SLOW);
@@ -344,9 +347,9 @@ void skills() {
     chassis.turnToHeading(90, 700);
     moveToPoint(-30, 63, 2000, {.forwards = false, .minSpeed = 20});
     lil_krith.set_value(false);
-    moveToPoint(-48, 48, 2000, {.forwards = false,  .minSpeed = 20});
+    moveToPoint(-48, 50, 2000, {.forwards = false,  .minSpeed = 20});
     chassis.turnToHeading(-90, 700);
-    moveToPoint(-20, 48, 2500, {.forwards = false, .maxSpeed = 70});
+    moveToPoint(-20, 50, 2500, {.forwards = false, .maxSpeed = 70});
     pros::delay(400);
     wing.set_value(false);
     lil_krith.set_value(true);
@@ -354,13 +357,13 @@ void skills() {
     
     
 // match loader far sides
-    chassis.moveToPoint(-67, 43, 2000, {.maxSpeed = 55});
+    chassis.moveToPoint(-67, 47, 2000, {.maxSpeed = 55});
     pros::delay(200);
     wing.set_value(true);
     pros::delay(1800);
-    chassis.moveToPoint(-67, 43, 2000, {.maxSpeed = 55});
+    chassis.moveToPoint(-67, 47, 2000, {.maxSpeed = 55});
     pros::delay(700);
-    chassis.moveToPoint(-20, 48, 2500, {.forwards = false, .maxSpeed = 70});
+    chassis.moveToPoint(-20, 50, 2500, {.forwards = false, .maxSpeed = 70});
     pros::delay(700);
     wing.set_value(false);
     pros::delay(1000);
@@ -541,7 +544,7 @@ static constexpr int AUTON_COUNT =
 // Autonomous selector task
 // ------------------------
 void autonSelectorTask(void*) {
-    int index = 7;  // -1 = None
+    int index = 4;  // -1 = None
     uint8_t lastButtons = pros::lcd::read_buttons();
 
     while (true) {

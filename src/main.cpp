@@ -160,6 +160,7 @@ void autonomous() {
  */
 void opcontrol() {
   	intake.set_state_and_move(Intake::State::NONE);
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
 	int forwardOut = 0;
   	while (true) {
     	// get joystick positions
@@ -170,7 +171,7 @@ void opcontrol() {
 		forwardOut = lemlib::slew(leftY, forwardOut, FORWARD_SLEW);
 
         // move the chassis with curvature drive
-        chassis.arcade(forwardOut, rightX,0.7);
+        chassis.arcade(forwardOut, rightX, 0.7);
     	intake.opcontrol(master);
     	
 		if (!pros::competition::is_connected()) {
