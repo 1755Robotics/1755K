@@ -11,7 +11,10 @@ pros::MotorGroup rightMotors({9, 11, 12}, pros::MotorGearset::blue); // right mo
 
 // Inertial Sensor on port 13
 pros::Imu imu(13);
-pros::Distance distance_sensor(17);
+pros::Distance dist_left(16); // UPDATE 
+pros::Distance dist_right(17); // UPDATE 
+pros::Distance dist_front(18); // UPDATE 
+pros::Distance dist_back(19);  // UPDATE 
 
 // tracking wheels
 // horizontal tracking wheel encoder. Rotation sensor, port 6, reversed

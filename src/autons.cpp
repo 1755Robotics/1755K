@@ -1,15 +1,89 @@
 #include "autons.hpp"
 #include "main.h"
 
+// Field and Robot Constants for Distance Odometry Reset (all in inches)
+static constexpr double FIELD_IN               = 144.0;
+static constexpr double ROBOT_HALF_W_IN        = 6.5;   // measure and update
+static constexpr double ROBOT_HALF_L_IN        = 6.5;   // measure and update
 
-void distanceReset(double range, double x, double y, double theta){
-    double rangeMM = range * 25.4;
-    double distance = distance_sensor.get();
-    double confidence = distance_sensor.get_confidence();
-    if (distance <= rangeMM && confidence > 20) {
-        chassis.setPose(x, y, theta);
-        pros::delay(100);
+// gotta fill in sensor offsets from tracking center
+// Positive X is toward the right side of the robot
+// Positive Y is toward the front of the robot
+static constexpr double LEFT_SENSOR_OFFSET_IN  = 0.0;
+static constexpr double RIGHT_SENSOR_OFFSET_IN = 0.0;
+static constexpr double FRONT_SENSOR_OFFSET_IN = 0.0;
+static constexpr double BACK_SENSOR_OFFSET_IN  = 0.0;
+
+// thresholds for validity checks
+static constexpr double SUM_TOLERANCE_IN       = 3.5;
+static constexpr int    MIN_CONFIDENCE         = 30;
+static constexpr double MAX_CORRECTION_IN      = 5.0;
+
+void distanceReset(double range, double x, double y, double theta) {
+    // Euclidean gate wow
+    lemlib::Pose current = chassis.getPose();
+    double dx   = x - current.x;
+    double dy   = y - current.y;
+    double dist = sqrt(dx * dx + dy * dy);
+    if (dist > MAX_CORRECTION_IN) return;
+
+    // Read sensors
+    double L_in = dist_left.get()  / 25.4;
+    double R_in = dist_right.get() / 25.4;
+    double F_in = dist_front.get() / 25.4;
+    double B_in = dist_back.get()  / 25.4;
+
+    int    L_conf = dist_left.get_confidence();
+    int    R_conf = dist_right.get_confidence();
+    int    F_conf = dist_front.get_confidence();
+    int    B_conf = dist_back.get_confidence();
+
+    bool   L_large = dist_left.get_object_size()  == pros::E_DISTANCE_SIZE_LARGE;
+    bool   R_large = dist_right.get_object_size() == pros::E_DISTANCE_SIZE_LARGE;
+    bool   F_large = dist_front.get_object_size() == pros::E_DISTANCE_SIZE_LARGE;
+    bool   B_large = dist_back.get_object_size()  == pros::E_DISTANCE_SIZE_LARGE;
+
+    // check left+right measurement validity
+    double expected_x_sum = FIELD_IN
+                            - 2.0 * ROBOT_HALF_W_IN
+                            + (LEFT_SENSOR_OFFSET_IN - RIGHT_SENSOR_OFFSET_IN);
+
+    bool x_sum_ok  = std::abs((L_in + R_in) - expected_x_sum) < SUM_TOLERANCE_IN;
+    bool x_size_ok = L_large && R_large;
+    bool x_conf_ok = L_conf >= MIN_CONFIDENCE && R_conf >= MIN_CONFIDENCE;
+    bool x_valid   = x_sum_ok && x_size_ok && x_conf_ok;
+
+    // check front+back measurement validity
+    double expected_y_sum = FIELD_IN
+                            - 2.0 * ROBOT_HALF_L_IN
+                            + (BACK_SENSOR_OFFSET_IN - FRONT_SENSOR_OFFSET_IN);
+
+    bool y_sum_ok  = std::abs((F_in + B_in) - expected_y_sum) < SUM_TOLERANCE_IN;
+    bool y_size_ok = F_large && B_large;
+    bool y_conf_ok = F_conf >= MIN_CONFIDENCE && B_conf >= MIN_CONFIDENCE;
+    bool y_valid   = y_sum_ok && y_size_ok && y_conf_ok;
+
+    // make corrected positions for the axes that are valid
+    double new_x = current.x;
+    double new_y = current.y;
+
+    if (x_valid) {
+        double x_from_left  = -72.0 + (L_in + ROBOT_HALF_W_IN + LEFT_SENSOR_OFFSET_IN);
+        double x_from_right =  72.0 - (R_in + ROBOT_HALF_W_IN - RIGHT_SENSOR_OFFSET_IN);
+        new_x = (x_from_left + x_from_right) / 2.0;
     }
+
+    if (y_valid) {
+        double y_from_back  = -72.0 + (B_in + ROBOT_HALF_L_IN + BACK_SENSOR_OFFSET_IN);
+        double y_from_front =  72.0 - (F_in + ROBOT_HALF_L_IN - FRONT_SENSOR_OFFSET_IN);
+        new_y = (y_from_back + y_from_front) / 2.0;
+    }
+
+    // oonly apply if at axises is valid
+    if (!x_valid && !y_valid) return;
+
+    chassis.setPose(new_x, new_y, theta);
+    pros::delay(100);
 }
 
 // void moveToPointAndTurn(double x, double y, double timeout, double theta, lemlib::MoveToPointParams params = {}, bool async = true) {
@@ -512,6 +586,26 @@ void slewTest() {
     chassis.setPose(0, 0, 0); 
     pros::delay(100);
     moveToPoint(0, 60, 3000);
+}
+
+//example use
+void exampleDistanceResetAuton() {
+    // Starting near a wall or corner
+    chassis.setPose(0, 0, 0); 
+    pros::delay(100);
+
+    // move to a position somewhere
+    moveToPoint(24, 24, 2000);
+    
+    // somewhere where it stops is best so that the distance measurement isnt noisy
+    pros::delay(300);
+
+    // pass the expected Pose (24, 24, 0). 
+    // the sensors won't correct if you're > 5 inches off since then something is wrong with measurement
+    distanceReset(40, 24, 24, 0);
+
+    // move in reverse somewhere else now that odom is corrected
+    moveToPoint(0, 0, 2000, {.forwards = false});
 }
 
 // ------------------------
