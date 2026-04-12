@@ -163,7 +163,6 @@ void autonomous() {
  */
 void opcontrol() {
   	intake.set_state_and_move(Intake::State::NONE);
-    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
 	int forwardOut = 0;
   	while (true) {
     	// get joystick positions
